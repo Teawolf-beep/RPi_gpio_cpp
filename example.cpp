@@ -1,30 +1,3 @@
-# RPi_gpio_cpp
-A C++ GPIO library for newer Raspberry Pi models (supports direct register access and kernel interrupts)
-
-## Introduction
-
-There are a lot of GPIO libraries for the Raspberry Pi out there. However I was not able to find a decent library, which allows me to read, set and clear pins via direct register access (should be the fastest possible way) and poll on file descriptor to wait for an interrupt to happen.
-
-This library combines both options. Regular GPIO access is realized by writing or reading from the registers directly and interrupts are set up via sysfs. 
-
-It is tested on newer Raspberry Pi versions (3, 3B+ and 4) all of them running a recent Raspbian. In older Raspbian version you will probably not have the opportunity to access the gpio memory without root rights (i.e. GPIO_USER_FILENAME does not exist). 
-
-## Usage
-
-First install git and clone this repository. 
-
-```
-git clone https://github.com/Teawolf-beep/RPi_gpio_cpp.git
-```
-
-Now you are ready to go. The whole code is documented with doxygen, for a starting point open the "index.html" file inside the "html" folder with any browser. You should be able to check out each method as well as constructor and destructor.
-
-The constructor tries to access and map the gpio memory of the Raspberry Pi. In case anything goes wrong, a GPIOException is thrown. It expects as argument the path to the gpio file, where you can choose between the regular and a non root versions (check GPIO.h for possible options). 
-
-Check "example.cpp" (or see below) for a simple example on how to use an input, an output and an interrupt. For further possibilities check the documentation.
-
-### Example (example.cpp)
-```cpp
 /****************************************************************
  * An example on how to use the GPIO library.
  * This example does not handle any interrupts thrown by the GPIO constructor!
@@ -101,11 +74,3 @@ int main(int argc, char** argv)
     }
     return 0;
 }
-```
-
-## Further reading
-
-No warranty on anything you use the library for. I do not think that it works for all SoC's used in Raspberry Pis and hope nobody crashes its system while using it. Well, that's all...have fun!
-
-This library combines different things I found on the interent. Handling with sysfs is described [here](https://elinux.org/RPi_GPIO_Code_Samples#sysfs) and the register addresses etc do I have from [here](https://www.raspberrypi.org/app/uploads/2012/02/BCM2835-ARM-Peripherals.pdf)
-
