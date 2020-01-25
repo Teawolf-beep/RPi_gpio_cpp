@@ -67,9 +67,112 @@ $(function() {
 <div class="title">RPi_gpio_cpp </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>A C++ <a class="el" href="classGPIO.html">GPIO</a> library for newer Raspberry Pi models (supports direct register access and kernel interrupts) </p>
+<div class="textblock"><p>A C++ <a class="el" href="classGPIO.html">GPIO</a> library for newer Raspberry Pi models (supports direct register access and kernel interrupts)</p>
+<h1><a class="anchor" id="autotoc_md1"></a>
+Introduction</h1>
+<p>There are a lot of <a class="el" href="classGPIO.html">GPIO</a> libraries for the Raspberry Pi out there. However I was not able to find a decent library, which allows me to read, set and clear pins via direct register access (should be the fastest possible way) and poll on file descriptor to wait for an interrupt to happen.</p>
+<p>This library combines both options. Regular <a class="el" href="classGPIO.html">GPIO</a> access is realized by writing or reading from the registers directly and interrupts are set up via sysfs.</p>
+<p>It is tested on newer Raspberry Pi versions (3, 3B+ and 4) all of them running a recent Raspbian. In older Raspbian version you will probably not have the opportunity to access the gpio memory without root rights (i.e. GPIO_USER_FILENAME does not exist).</p>
+<h1><a class="anchor" id="autotoc_md2"></a>
+Usage</h1>
+<p>First install git and clone this repository.</p>
+<div class="fragment"><div class="line">git clone https://github.com/Teawolf-beep/RPi_gpio_cpp.git</div>
+</div><!-- fragment --><p>Now you are ready to go. The whole code is documented with doxygen, for a starting point open the "index.html" file inside the "html" folder with any browser. You should be able to check out each method as well as constructor and destructor.</p>
+<p>The constructor tries to access and map the gpio memory of the Raspberry Pi. In case anything goes wrong, a GPIOException is thrown. It expects as argument the path to the gpio file, where you can choose between the regular and a non root versions (check <a class="el" href="GPIO_8h_source.html">GPIO.h</a> for possible options).</p>
+<p>Check "example.cpp" (or see below) for a simple example on how to use an input, an output and an interrupt. For further possibilities check the documentation.</p>
+<h2><a class="anchor" id="autotoc_md3"></a>
+Example (example.cpp)</h2>
+<div class="fragment"><div class="line"><span class="comment">/****************************************************************</span></div>
+<div class="line"><span class="comment"> * An example on how to use the GPIO library.</span></div>
+<div class="line"><span class="comment"> * This example does not handle any interrupts thrown by the GPIO constructor!</span></div>
+<div class="line"><span class="comment"> ****************************************************************/</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// System includes</span></div>
+<div class="line"><span class="preprocessor">#include &lt;poll.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;cstring&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;unistd.h&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Project includes</span></div>
+<div class="line"><span class="preprocessor">#include &quot;GPIO.h&quot;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// BCM pin numbers used in this example</span></div>
+<div class="line"><span class="preprocessor">#define INPUT 23</span></div>
+<div class="line"><span class="preprocessor">#define OUTPUT 24</span></div>
+<div class="line"><span class="preprocessor">#define INTERRUPT 25</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keywordtype">int</span> main(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span>** argv)</div>
+<div class="line">{</div>
+<div class="line">    <span class="comment">// Call the constructor with the file path defined in GPIO.h (&quot;/dev/gpiomem&quot;)</span></div>
+<div class="line">    <a class="code" href="classGPIO.html">GPIO</a> gpio = <a class="code" href="classGPIO.html">GPIO</a>(GPIO_USER_FILENAME);</div>
+<div class="line">    <span class="keyword">struct </span>pollfd pfd;</div>
+<div class="line">    <span class="keywordtype">char</span> buffer[8];</div>
+<div class="line">    <span class="keywordtype">int</span> fd;</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Make the input pin an input. Returns true, if everything is ok. Otherwise an error occured</span></div>
+<div class="line">    <span class="keywordflow">if</span> (!gpio.<a class="code" href="classGPIO.html#a902bbabde26fca6ee9778f259f207887">makeInput</a>(INPUT)) {</div>
+<div class="line">        printf(<span class="stringliteral">&quot;Pin %d could not be made an input!\n&quot;</span>, INPUT);</div>
+<div class="line">        <span class="keywordflow">return</span> -1;</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Make the output pin an output. Returns true, if everything is ok. Otherwise an error occurred</span></div>
+<div class="line">    <span class="keywordflow">if</span> (!gpio.<a class="code" href="classGPIO.html#a461ce1f2ba09e006c76bb19e276ce11b">makeOutput</a>(OUTPUT)) {</div>
+<div class="line">        printf(<span class="stringliteral">&quot;Pin %d could not be made an output!\n&quot;</span>, OUTPUT);</div>
+<div class="line">        <span class="keywordflow">return</span> -1;</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Set up the interrupt pin with the use of an internal pull down resistor and rising edge activation</span></div>
+<div class="line">    fd = gpio.<a class="code" href="classGPIO.html#a535d16b2fbdc1c5af8d61af0ce2a6092">setSingleKernelDriver</a>(INTERRUPT, <a class="code" href="namespacePullState.html#a9612b7179c3a66bfa7ef1ff04165f8ea">PullState::DOWN</a>, <a class="code" href="namespaceEdge.html#a14869b56798118699a17566fa130e93b">Edge::RISING</a>);</div>
+<div class="line">    <span class="comment">// Less than zero, if an error occurred. Otherwise the return value is the file descriptor we have to monitor</span></div>
+<div class="line">    <span class="keywordflow">if</span> (fd &lt; 0) {</div>
+<div class="line">        printf(<span class="stringliteral">&quot;Could not set up an interrupt for pin %d\n&quot;</span>, INTERRUPT);</div>
+<div class="line">        <span class="keywordflow">return</span> -1;</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Assign the file descriptor to the pollfd struct</span></div>
+<div class="line">    pfd.fd = fd;</div>
+<div class="line">    <span class="comment">// Assign the input event of interest to the pollfd struct</span></div>
+<div class="line">    pfd.events = POLLPRI;</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Wait for an interrupt to happen without time limit (third parameter). This thread will consume no unnecessary CPU power while inside poll()</span></div>
+<div class="line">    <span class="keywordflow">if</span> (poll(&amp;pfd, 1, -1) == -1) {</div>
+<div class="line">        printf(<span class="stringliteral">&quot;Error while poll(): %s\n&quot;</span>, strerror(errno));</div>
+<div class="line">        <span class="keywordflow">return</span> -1;</div>
+<div class="line">    }</div>
+<div class="line">    <span class="comment">// True if an interrupt happened</span></div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (pfd.revents &amp; POLLPRI) {</div>
+<div class="line">        <span class="comment">// Consume the interrupt (we are not really interested in the return value of read)</span></div>
+<div class="line">        lseek(pfd.fd, 0, SEEK_SET);</div>
+<div class="line">        read(pfd.fd, &amp;buffer, <span class="keyword">sizeof</span>(buffer));</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Perform here any action you want to do, when the interrupt has happened!</span></div>
+<div class="line">        <span class="comment">// The readPin() method will return true, if the passed pin is high, else it will return false</span></div>
+<div class="line">        printf(<span class="stringliteral">&quot;Interrupt occurred on pin %d! The value of the input pin is %s!\n&quot;</span>, INTERRUPT, (gpio.<a class="code" href="classGPIO.html#a810be24e2af5c2cb2632f8174fe0319b">readPin</a>(INPUT)) ? <span class="stringliteral">&quot;high&quot;</span> : <span class="stringliteral">&quot;low&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Toggle the output pin</span></div>
+<div class="line">        <span class="keywordflow">if</span> (gpio.<a class="code" href="classGPIO.html#a810be24e2af5c2cb2632f8174fe0319b">readPin</a>(OUTPUT)) {</div>
+<div class="line">            gpio.<a class="code" href="classGPIO.html#a9c8c6bc27a3b5a1bd04f5179e967dea0">clearPin</a>(OUTPUT);</div>
+<div class="line">        }</div>
+<div class="line">        <span class="keywordflow">else</span> {</div>
+<div class="line">            gpio.<a class="code" href="classGPIO.html#a55b7ce4966466e9b61721a45552e24c4">setPin</a>(OUTPUT);</div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line">    <span class="keywordflow">return</span> 0;</div>
+<div class="line">}</div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md4"></a>
+Further reading</h1>
+<p>No warranty on anything you use the library for. I do not think that it works for all SoC's used in Raspberry Pis and hope nobody crashes its system while using it. Well, that's all...have fun!</p>
+<p>This library combines different things I found on the interent. Handling with sysfs is described <a href="https://elinux.org/RPi_GPIO_Code_Samples#sysfs">here</a> and the register addresses etc do I have from <a href="https://www.raspberrypi.org/app/uploads/2012/02/BCM2835-ARM-Peripherals.pdf">here</a> </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
+<div class="ttc" id="aclassGPIO_html_a461ce1f2ba09e006c76bb19e276ce11b"><div class="ttname"><a href="classGPIO.html#a461ce1f2ba09e006c76bb19e276ce11b">GPIO::makeOutput</a></div><div class="ttdeci">bool makeOutput(uint8_t pin)</div></div>
+<div class="ttc" id="aclassGPIO_html_a902bbabde26fca6ee9778f259f207887"><div class="ttname"><a href="classGPIO.html#a902bbabde26fca6ee9778f259f207887">GPIO::makeInput</a></div><div class="ttdeci">bool makeInput(uint8_t pin)</div></div>
+<div class="ttc" id="aclassGPIO_html"><div class="ttname"><a href="classGPIO.html">GPIO</a></div><div class="ttdef"><b>Definition:</b> GPIO.h:57</div></div>
+<div class="ttc" id="aclassGPIO_html_a535d16b2fbdc1c5af8d61af0ce2a6092"><div class="ttname"><a href="classGPIO.html#a535d16b2fbdc1c5af8d61af0ce2a6092">GPIO::setSingleKernelDriver</a></div><div class="ttdeci">int setSingleKernelDriver(uint8_t pin, uint8_t pull_state, const std::string &amp;edge)</div></div>
+<div class="ttc" id="aclassGPIO_html_a810be24e2af5c2cb2632f8174fe0319b"><div class="ttname"><a href="classGPIO.html#a810be24e2af5c2cb2632f8174fe0319b">GPIO::readPin</a></div><div class="ttdeci">bool readPin(uint8_t pin)</div></div>
+<div class="ttc" id="anamespaceEdge_html_a14869b56798118699a17566fa130e93b"><div class="ttname"><a href="namespaceEdge.html#a14869b56798118699a17566fa130e93b">Edge::RISING</a></div><div class="ttdeci">const std::string RISING</div><div class="ttdef"><b>Definition:</b> GPIO.h:37</div></div>
+<div class="ttc" id="aclassGPIO_html_a55b7ce4966466e9b61721a45552e24c4"><div class="ttname"><a href="classGPIO.html#a55b7ce4966466e9b61721a45552e24c4">GPIO::setPin</a></div><div class="ttdeci">bool setPin(uint8_t pin)</div></div>
+<div class="ttc" id="anamespacePullState_html_a9612b7179c3a66bfa7ef1ff04165f8ea"><div class="ttname"><a href="namespacePullState.html#a9612b7179c3a66bfa7ef1ff04165f8ea">PullState::DOWN</a></div><div class="ttdeci">const uint8_t DOWN</div><div class="ttdef"><b>Definition:</b> GPIO.h:26</div></div>
+<div class="ttc" id="aclassGPIO_html_a9c8c6bc27a3b5a1bd04f5179e967dea0"><div class="ttname"><a href="classGPIO.html#a9c8c6bc27a3b5a1bd04f5179e967dea0">GPIO::clearPin</a></div><div class="ttdeci">bool clearPin(uint8_t pin)</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by &#160;<a href="http://www.doxygen.org/index.html">

@@ -88,7 +88,7 @@ int main(int argc, char** argv)
         read(pfd.fd, &buffer, sizeof(buffer));
 
         // Perform here any action you want to do, when the interrupt has happened!
-        // The readPin() method will return true, if the passed pin is high, else it will return low
+        // The readPin() method will return true, if the passed pin is high, else it will return false
         printf("Interrupt occurred on pin %d! The value of the input pin is %s!\n", INTERRUPT, (gpio.readPin(INPUT)) ? "high" : "low");
 
         // Toggle the output pin
