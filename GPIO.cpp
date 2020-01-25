@@ -52,8 +52,7 @@ GPIO::GPIO(const std::string& path)
 
 GPIO::~GPIO()
 {
-    // Reset GPIO pins
-    printf("~GPIO() called!\n");
+    // Release all pins
     this->releaseAllOutputs();
     this->releaseAllKernelDriver();
 }
@@ -74,13 +73,13 @@ bool GPIO::makeInput(uint8_t pin)
     // Higher numbers are used internally
     if (pin > 31)
     {
-        printf("GPIO::makeInput(), pin %d -> Invalid pin number!\n", pin);
+        printf("GPIO::makeInput() -> Invalid pin number (%d)!\n", pin);
         return false;
     }
     // Check if Pin is already in use as an output
     if (this->isOutput(pin))
     {
-        printf("GPIO::makeInput(), pin %d -> Pin is in use as an output!\n", pin);
+        printf("GPIO::makeInput() -> Pin %d is in use as an output!\n", pin);
         return false;
     }
     // Get the address of the respecting function select register
@@ -99,7 +98,7 @@ bool GPIO::makeOutput(uint8_t pin)
     // Higher numbers are used internally
     if (pin > 31)
     {
-        printf("GPIO::makeOutput(), pin %d -> Invalid pin number!\n", pin);
+        printf("GPIO::makeOutput() -> Invalid pin number (%d)!\n", pin);
         return false;
     }
     //Get the address of the respecting function select register
@@ -123,13 +122,13 @@ int GPIO::setSingleKernelDriver(uint8_t pin, uint8_t pull_state, const std::stri
     // Higher numbers are used internally
     if (pin > 31)
     {
-        printf("GPIO::setSingleKernelDriver(). pin %d -> Invalid pin number!\n", pin);
+        printf("GPIO::setSingleKernelDriver() -> Invalid pin number (%d)!\n", pin);
         return -1;
     }
     // Check if Pin is already in use as an output
     if (this->isOutput(pin))
     {
-        printf("GPIO::setSingleKernelDriver(), pin %d -> Pin is in use as an output!\n", pin);
+        printf("GPIO::setSingleKernelDriver() -> Pin %d is in use as an output!\n", pin);
         return -2;
     }
     // Get the address of the pull register
@@ -265,14 +264,14 @@ bool GPIO::setMultipleKernelDriver(std::vector<InterruptDescriptor> &descriptors
         // Higher numbers are used internally
         if (descriptor.pin > 31)
         {
-            printf("GPIO::setMultipleKernelDriver(), pin %d -> Invalid pin number!\n", descriptor.pin);
+            printf("GPIO::setMultipleKernelDriver() -> Invalid pin number (%d)!\n", descriptor.pin);
             return false;
         }
         // Check if Pin is already in use as an output
         if (this->isOutput(descriptor.pin))
         {
-            printf("GPIO::setMultipleKernelDriver(), pin %d -> "
-                   "Pin is in use as an output!\n", descriptor.pin);
+            printf("GPIO::setMultipleKernelDriver() -> "
+                   "Pin %d is in use as an output!\n", descriptor.pin);
             return false;
         }
     }
@@ -450,7 +449,7 @@ void GPIO::releaseAllKernelDriver()
     // True, if an error occurred
     if (fd == -1)
     {
-        printf("GPIO::releaseMultipleKernelDriver() -> "
+        printf("GPIO::releaseAllKernelDriver() -> "
                "Error while opening GPIO unexport file: %s\n", strerror(errno));
         return;
     }
@@ -462,7 +461,7 @@ void GPIO::releaseAllKernelDriver()
         // Write the pin number to the unexport file
         if (write(fd, buf, (pin < 10) ? 1 : 2) == -1)
         {
-            printf("GPIO::releaseMultipleKernelDriver() -> "
+            printf("GPIO::releaseAllKernelDriver() -> "
                    "Error while writing to GPIO unexport file: %s\n", strerror(errno));
             return;
         }
@@ -475,7 +474,7 @@ bool GPIO::setPullState(uint8_t pin, uint8_t state)
     // Higher numbers are used internally
     if (pin > 31)
     {
-        printf("GPIO::setPullState(), pin %d -> Invalid pin number!\n", pin);
+        printf("GPIO::setPullState() -> Invalid pin number (%d)!\n", pin);
         return false;
     }
     // Get the address of the pull register
@@ -544,13 +543,13 @@ bool GPIO::setPin(uint8_t pin)
     // Higher numbers are used internally
     if (pin > 31)
     {
-        printf("GPIO::setPin(). pin %d -> Invalid pin number!\n", pin);
+        printf("GPIO::setPin() -> Invalid pin number (%d)!\n", pin);
         return false;
     }
     // Check if Pin is set as an output
     if (!this->isOutput(pin))
     {
-        printf("GPIO::setPin(), pin %d -> Pin is not set as an output!\n", pin);
+        printf("GPIO::setPin() -> Pin %d is not set as an output!\n", pin);
         return false;
     }
     // Get address of the set register
@@ -568,13 +567,13 @@ bool GPIO::clearPin(uint8_t pin)
     // Higher numbers are used internally
     if (pin > 31)
     {
-        printf("GPIO::clearPin(). pin %d -> Invalid pin number!\n", pin);
+        printf("GPIO::clearPin() -> Invalid pin number (%d)!\n", pin);
         return false;
     }
     // Check if Pin is set as an output
     if (!this->isOutput(pin))
     {
-        printf("GPIO::clearPin(), pin %d -> Pin is not set as an output!\n", pin);
+        printf("GPIO::clearPin() -> Pin %d is not set as an output!\n", pin);
         return false;
     }
     // Get the address of the clear register
@@ -592,13 +591,13 @@ bool GPIO::releaseOutput(uint8_t pin)
     // Higher numbers are used internally
     if (pin > 31)
     {
-        printf("GPIO::releaseOutput(). pin %d -> Invalid pin number!\n", pin);
+        printf("GPIO::releaseOutput() -> Invalid pin number (%d)!\n", pin);
         return false;
     }
     // Check if Pin is set as an output
     if (!this->isOutput(pin))
     {
-        printf("GPIO::releaseOutput(), pin %d -> Pin is not set as an output!\n", pin);
+        printf("GPIO::releaseOutput() -> Pin %d is not set as an output!\n", pin);
         return false;
     }
     // Make this pin an input
