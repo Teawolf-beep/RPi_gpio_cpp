@@ -4,7 +4,7 @@ There are a lot of GPIO libraries for the Raspberry Pi out there. However I was 
 
 This library combines both options. Regular GPIO access is realized by writing or reading from the registers directly and interrupts are set up via sysfs. 
 
-It is tested with c++11 and c++14 on newer Raspberry Pi versions (3, 3B+ and 4) all of them running a recent Raspbian. In older Raspbian version you probably won't not have the opportunity to access the gpio memory without root rights (i.e. /dev/gpiomem does not exist). 
+It is tested with c++11 and c++14 on newer Raspberry Pi versions (3, 3B+ and 4) all of them running a recent Raspbian. In older Raspbian version you probably won't have the opportunity to access the gpio memory without root rights (i.e. /dev/gpiomem does not exist). 
 
 ## Usage
 
